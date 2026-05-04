@@ -1,98 +1,110 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import * as Location from 'expo-location';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { homeStyles as styles } from '../../styles/home-styles';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [location, setLocation] = useState<any>(null);
+  const [region, setRegion] = useState<any>(null);
+  const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
+  const [loading, setLoading] = useState(true);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Dummy stations (we’ll replace with backend later)
+  const stations = [
+    {
+      id: 1,
+      name: 'EV Station A',
+      latitude: 28.6139,
+      longitude: 77.2090,
+    },
+    {
+      id: 2,
+      name: 'EV Station B',
+      latitude: 28.6150,
+      longitude: 77.2105,
+    },
+  ];
+
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  const getUserLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access location was denied');
+      setLoading(false);
+      return;
+    }
+    let userLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.LocationAccuracy.Highest,
+    });
+    setLocation(userLocation.coords);
+    setRegion({
+      latitude: userLocation.coords.latitude,
+      longitude: userLocation.coords.longitude,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
+    });
+    setLoading(false);
+  };
+
+  if (loading || !location) {
+    return <ActivityIndicator style={{ flex: 1 }} size="large" />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.mapTypeRow}>
+        <Pressable
+          style={[styles.mapTypeButton, mapType === 'standard' && styles.mapTypeButtonActive]}
+          onPress={() => setMapType('standard')}
+        >
+          <Text style={[styles.mapTypeText, mapType === 'standard' && styles.mapTypeTextActive]}>Standard</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.mapTypeButton, mapType === 'satellite' && styles.mapTypeButtonActive]}
+          onPress={() => setMapType('satellite')}
+        >
+          <Text style={[styles.mapTypeText, mapType === 'satellite' && styles.mapTypeTextActive]}>Satellite</Text>
+        </Pressable>
+      </View>
+      <MapView
+        style={styles.map}
+        region={region}
+        mapType={mapType}
+        onRegionChangeComplete={(newRegion) => setRegion(newRegion)}
+        showsUserLocation
+        followsUserLocation
+        showsMyLocationButton
+        zoomEnabled
+        scrollEnabled
+        rotateEnabled
+        pitchEnabled
+      >
+        {/* User Marker */}
+        <Marker
+          coordinate={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }}
+          title="You are here"
+          pinColor="blue"
+        />
+
+        {/* Charging Stations */}
+        {stations.map((station) => (
+          <Marker
+            key={station.id}
+            coordinate={{
+              latitude: station.latitude,
+              longitude: station.longitude,
+            }}
+            title={station.name}
+          />
+        ))}
+      </MapView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
