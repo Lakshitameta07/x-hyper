@@ -1,4 +1,4 @@
-package xhyperchargebackend
+package main
 
 import (
 	"x-hyper-charge-backend/routes"
