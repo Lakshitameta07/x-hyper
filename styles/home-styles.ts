@@ -29,6 +29,14 @@ export const homeStyles = StyleSheet.create({
   mapTypeTextActive: {
     color: '#fff',
   },
+  stationMarker: {
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   map: {
     flex: 1,
   },

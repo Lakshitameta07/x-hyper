@@ -1,3 +1,4 @@
+import { api } from '@/src/services/api';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -10,6 +11,24 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [vehicleType, setVehicleType] = useState<string[]>([]);
 
+  const handleSignup = async () => {
+    try {
+      const response = await api.post('/signup', {
+        email,
+        password,
+        vehicleType:vehicleType,
+      });
+      console.log('Signup response:', response.data);
+      if (response.status === 200) {
+        router.replace('/(tabs)');
+      } else {
+        alert('Signup failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('An error occurred during signup. Please try again.');
+    }
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
@@ -61,7 +80,7 @@ export default function Signup() {
       {/* Signup Button */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.replace('/(tabs)')}
+        onPress={handleSignup}
       >
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
