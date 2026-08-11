@@ -1,7 +1,8 @@
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { STATIONS } from '@/data/stations';
 import { homeStyles as styles } from '../../styles/home-styles';
 
 export default function HomeScreen() {
@@ -9,22 +10,7 @@ export default function HomeScreen() {
   const [region, setRegion] = useState<any>(null);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
   const [loading, setLoading] = useState(true);
-
-  // Dummy stations (we’ll replace with backend later)
-  const stations = [
-    {
-      id: 1,
-      name: 'EV Station A',
-      latitude: 28.6139,
-      longitude: 77.2090,
-    },
-    {
-      id: 2,
-      name: 'EV Station B',
-      latitude: 28.6150,
-      longitude: 77.2105,
-    },
-  ];
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     getUserLocation();
@@ -50,12 +36,45 @@ export default function HomeScreen() {
     setLoading(false);
   };
 
+  const changeZoom = (factor: number) => {
+    if (!region) {
+      return;
+    }
+
+    const nextRegion = {
+      ...region,
+      latitudeDelta: Math.min(Math.max(region.latitudeDelta * factor, 0.002), 120),
+      longitudeDelta: Math.min(Math.max(region.longitudeDelta * factor, 0.002), 120),
+    };
+
+    mapRef.current?.animateToRegion(nextRegion, 420);
+  };
+
   if (loading || !location) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.zoomControls}>
+        <Pressable
+          accessibilityLabel="Zoom in"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => changeZoom(0.5)}
+          style={styles.zoomButton}>
+          <Text style={styles.zoomSymbol}>+</Text>
+        </Pressable>
+        <View style={styles.zoomDivider} />
+        <Pressable
+          accessibilityLabel="Zoom out"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => changeZoom(2)}
+          style={styles.zoomButton}>
+          <Text style={styles.zoomSymbol}>−</Text>
+        </Pressable>
+      </View>
       <View style={styles.mapTypeRow}>
         <Pressable
           style={[styles.mapTypeButton, mapType === 'standard' && styles.mapTypeButtonActive]}
@@ -71,6 +90,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
       <MapView
+        ref={mapRef}
         style={styles.map}
         region={region}
         mapType={mapType}
@@ -94,7 +114,7 @@ export default function HomeScreen() {
         />
 
         {/* Charging Stations */}
-        {stations.map((station) => (
+        {STATIONS.map((station) => (
           <Marker
             key={station.id}
             coordinate={{
