@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
@@ -6,6 +7,7 @@ import { STATIONS } from '@/data/stations';
 import { homeStyles as styles } from '../../styles/home-styles';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [location, setLocation] = useState<any>(null);
   const [region, setRegion] = useState<any>(null);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
@@ -117,12 +119,14 @@ export default function HomeScreen() {
         {STATIONS.map((station) => (
           <Marker
             key={station.id}
-            coordinate={{
-              latitude: station.latitude,
-              longitude: station.longitude,
-            }}
-            title={station.name}
-          />
+          coordinate={{
+            latitude: station.latitude,
+            longitude: station.longitude,
+          }}
+          title={station.name}
+          description={`${station.available}/${station.total} slots available`}
+          onPress={() => router.push(`/station/${station.id}`)}
+        />
         ))}
       </MapView>
     </View>

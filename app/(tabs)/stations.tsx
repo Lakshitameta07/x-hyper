@@ -93,7 +93,11 @@ export default function StationsScreen() {
           ListHeaderComponent={<Text style={styles.count}>{stations.length} stations nearby</Text>}
           ListEmptyComponent={<Text style={styles.empty}>No stations match your search.</Text>}
           renderItem={({ item: station }) => (
-            <Pressable accessibilityRole="button" style={styles.card}>
+            <Pressable
+              accessibilityLabel={`View details for ${station.name}`}
+              accessibilityRole="button"
+              onPress={() => router.push(`/station/${station.id}`)}
+              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
               <View style={styles.cardTop}>
                 <View style={styles.stationIcon}>
                   <MaterialIcons name="ev-station" size={25} color="#0B7966" />
@@ -144,6 +148,7 @@ const styles = StyleSheet.create<Record<string, any>>({
   listContent: { paddingBottom: 28 },
   count: { color: '#728079', fontSize: 13, fontWeight: '600', marginBottom: 10, marginTop: 5 },
   card: { backgroundColor: '#FFFFFF', borderColor: '#E2E8E4', borderRadius: 16, borderWidth: 1, marginBottom: 12, padding: 15 },
+  cardPressed: { backgroundColor: '#E7F5F0', borderColor: '#0B7966', transform: [{ scale: 0.985 }] },
   cardTop: { alignItems: 'center', flexDirection: 'row' },
   stationIcon: { alignItems: 'center', backgroundColor: '#E2F4EE', borderRadius: 12, height: 48, justifyContent: 'center', marginRight: 11, width: 48 },
   stationInfo: { flex: 1, minWidth: 0 },
